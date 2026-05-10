@@ -5,16 +5,12 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  base: '/hospital/',
   server: {
     host: "::",
-    port: 8081,
+    port: 4000,
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
-  base: "/hospital/",
-  build: {
-    outDir: "../dist/hospital",
-    emptyOutDir: true,
-  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

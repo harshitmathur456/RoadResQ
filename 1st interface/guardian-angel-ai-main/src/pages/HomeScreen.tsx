@@ -6,12 +6,9 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import { Button } from '@/components/ui/button';
 import {
-  Heart,
-  Baby,
   MapPin,
   Navigation,
-  Car,
-  MoreHorizontal
+  AlertTriangle
 } from 'lucide-react';
 import { MobileLayout } from '@/components/layout/MobileLayout';
 import { BottomNav } from '@/components/layout/BottomNav';
@@ -20,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { SavedLocation } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { sendSmsViaTextBee } from '@/services/smsService';
 
 // Fix Leaflet marker icon issue
 delete (L.Icon.Default.prototype as any)._getIconUrl;
@@ -207,28 +205,19 @@ const HomeScreen = () => {
         const message = `SOS! I need help! I'm in a ${type} emergency.\nLocation: ${addr}\nMap: https://www.google.com/maps?q=${lat},${lng}`;
         const whatsappUrl = `https://wa.me/${user.familyPhone}?text=${encodeURIComponent(message)}`;
 
-        // 1. Send Real SMS via Twilio (Supabase Edge Function)
-        supabase.functions.invoke('send-sms', {
-          body: {
-            to: user.familyPhone,
-            message: message
-          }
-        }).then(({ data, error }) => {
-          if (error) {
-            console.error('Failed to send SMS (Network/System):', error);
-            toast({ title: "SMS Failed", description: "System error sending SMS.", variant: "destructive" });
-          } else if (data && !data.success) {
-            // Handle "Business Logic" error (Twilio rejected it)
-            console.error('Twilio Rejected SMS:', data);
+        // 1. Send Real SMS via TextBee API
+        sendSmsViaTextBee(user.familyPhone, message).then((result) => {
+          if (result.success) {
+            console.log('SMS sent successfully via TextBee');
+            toast({ title: "SMS Sent", description: "Emergency SMS sent to your relative." });
+          } else {
+            console.error('TextBee SMS failed:', result.error);
             toast({
               title: "SMS Failed",
-              description: `Twilio Error: ${data.error || "Unknown error"}`,
+              description: `Could not send SMS: ${result.error || "Unknown error"}`,
               variant: "destructive",
               duration: 5000
             });
-          } else {
-            console.log('SMS sent successfully:', data);
-            toast({ title: "SMS Sent", description: "Emergency SMS sent via Twilio." });
           }
         });
 
@@ -254,13 +243,6 @@ const HomeScreen = () => {
     setCountdown(null);
     setPendingEmergency(null);
   };
-
-  const emergencyTypes = [
-    { id: 'accident', icon: Car, label: t('home.accident'), color: 'bg-emergency' },
-    { id: 'heart_emergency', icon: Heart, label: t('home.heart'), color: 'bg-warning' },
-    { id: 'maternal', icon: Baby, label: t('home.maternity'), color: 'bg-safe' },
-    { id: 'other', icon: MoreHorizontal, label: t('home.other'), color: 'bg-medical' },
-  ];
 
   return (
     <MobileLayout
@@ -291,29 +273,26 @@ const HomeScreen = () => {
       footer={<BottomNav />}
     >
       <div className="px-6 py-6 space-y-6">
-        {/* Quick Emergency Types */}
-        <div className="space-y-4">
+        {/* Single EMERGENCY Button */}
+        <div className="flex flex-col items-center justify-center space-y-4">
           <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wider text-center">
             {t('home.emergency')}
           </h2>
-          <div className="grid grid-cols-2 gap-4">
-            {emergencyTypes.map((type) => (
-              <button
-                key={type.id}
-                onClick={() => handleEmergencyType(type.id)}
-                className="group relative flex flex-col items-center justify-center gap-4 p-6 rounded-3xl border border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 active:scale-95 overflow-hidden bg-white/40 backdrop-blur-sm"
-              >
-                <div className={`absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity ${type.color}`} />
-
-                <div className={`w-16 h-16 rounded-2xl ${type.color} flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300`}>
-                  <type.icon className="w-8 h-8 text-white" />
-                </div>
-                <span className="text-base font-bold text-foreground/90 text-center leading-tight">
-                  {type.label}
-                </span>
-              </button>
-            ))}
-          </div>
+          <button
+            onClick={() => handleEmergencyType('general')}
+            className="group relative w-full flex flex-col items-center justify-center gap-4 py-12 rounded-3xl border-4 border-red-600 shadow-2xl hover:shadow-red-500/50 transition-all duration-300 active:scale-95 overflow-hidden bg-red-600 hover:bg-red-700"
+            style={{ minHeight: '220px' }}
+          >
+            {/* Pulsing glow ring */}
+            <span className="absolute w-40 h-40 rounded-full bg-white/10 animate-ping" />
+            <div className="w-20 h-20 rounded-full bg-white/20 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300 z-10">
+              <AlertTriangle className="w-10 h-10 text-white" />
+            </div>
+            <span className="text-3xl font-black text-white tracking-widest uppercase z-10">
+              EMERGENCY
+            </span>
+            <span className="text-sm text-white/80 font-medium z-10">Press to send SOS alert</span>
+          </button>
         </div>
 
         {/* Location Status with Map */}
@@ -373,19 +352,8 @@ const HomeScreen = () => {
           onClick={() => navigate('/first-aid')}
           className="w-full bg-gradient-to-r from-safe to-safe/80 rounded-2xl p-4 flex items-center gap-4 text-left transition-transform hover:scale-[1.02] active:scale-[0.98]"
         >
-          {/* <div className="w-12 h-12 bg-secondary-foreground/20 rounded-xl flex items-center justify-center">
-            <Stethoscope className="w-6 h-6 text-secondary-foreground" />
-          </div> */}
-          {/* Removed Stethoscope import to clean up, using generic placeholder or simpler layout if needed, 
-              but keeping code consistent with previous. Ah wait, I removed Stethoscope from imports. 
-              Let me re-add it or use MoreHorizontal for now if I don't want to re-import. 
-              Actually, the user didn't ask to change this, but I removed Stethoscope from imports.
-              Let me check imports again. I removed Stethoscope. I should probably remove this block 
-              or fix the icon. The user didn't ask to remove First Aid. I'll just change the icon 
-              to Heart or something available or re-import Stethoscope.
-              Re-importing Stethoscope is safer. */}
           <div className="w-12 h-12 bg-secondary-foreground/20 rounded-xl flex items-center justify-center">
-            <Heart className="w-6 h-6 text-secondary-foreground" />
+            <AlertTriangle className="w-6 h-6 text-secondary-foreground" />
           </div>
           <div className="flex-1">
             <h3 className="font-semibold text-secondary-foreground">AI First-Aid Assistant</h3>

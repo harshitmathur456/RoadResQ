@@ -14,7 +14,7 @@
       "destination": "/dist/assets/:path*"
     },
     {
-      "source": "/(.*\\.(png|jpg|jpeg|svg|ico|json))",
+      "source": "/(.*\\.(?:png|jpg|jpeg|svg|ico|json))",
       "destination": "/dist/$1"
     },
     {

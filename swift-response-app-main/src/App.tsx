@@ -19,7 +19,7 @@ const App = () => (
       <DriverProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <BrowserRouter basename="/driver">
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<DriverDashboard />} />

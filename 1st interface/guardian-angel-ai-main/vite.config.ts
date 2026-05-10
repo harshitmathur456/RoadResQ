@@ -8,6 +8,7 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 5173,
+    allowedHosts: true,
     proxy: {
       // Proxy Groq API calls to bypass CORS
       '/api/groq': {
@@ -15,11 +16,13 @@ export default defineConfig(({ mode }) => ({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/groq/, ''),
       },
+      // Proxy TextBee SMS API calls to bypass CORS
+      '/api/textbee': {
+        target: 'https://api.textbee.dev',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/textbee/, ''),
+      },
     },
-  },
-  build: {
-    outDir: "../../dist",
-    emptyOutDir: true,
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {

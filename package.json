@@ -1,12 +1,12 @@
 {
-    "name": "rrq-monorepo",
+    "name": "rrq-main-monorepo",
+    "version": "1.0.0",
     "private": true,
-    "description": "Root package to orchestrate builds for Vercel deployment of 3 React apps",
     "scripts": {
-        "postinstall": "npm install --prefix \"1st interface/guardian-angel-ai-main\" && npm install --prefix \"3RD-PHASE-HOSPITAL-main\" && npm install --prefix \"swift-response-app-main\"",
-        "build": "npm run build:citizen && npm run build:hospital && npm run build:driver",
-        "build:citizen": "npm run build --prefix \"1st interface/guardian-angel-ai-main\"",
-        "build:hospital": "npm run build --prefix \"3RD-PHASE-HOSPITAL-main\"",
-        "build:driver": "npm run build --prefix \"swift-response-app-main\""
+        "install:all": "cd \"1st interface/guardian-angel-ai-main\" && npm install && cd ../../3RD-PHASE-HOSPITAL-main && npm install && cd ../swift-response-app-main && npm install",
+        "build:driver": "cd swift-response-app-main && npm run build -- --outDir ../dist/driver --emptyOutDir",
+        "build:hospital": "cd 3RD-PHASE-HOSPITAL-main && npm run build -- --outDir ../dist/hospital --emptyOutDir",
+        "build:guardian": "cd \"1st interface/guardian-angel-ai-main\" && npm run build -- --outDir ../../dist --emptyOutDir",
+        "build": "npm run install:all && npm run build:driver && npm run build:hospital && npm run build:guardian"
     }
 }
