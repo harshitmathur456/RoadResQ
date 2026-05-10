@@ -7,6 +7,6 @@
         "build:driver": "cd swift-response-app-main && npm run build -- --outDir ../dist/driver --emptyOutDir",
         "build:hospital": "cd 3RD-PHASE-HOSPITAL-main && npm run build -- --outDir ../dist/hospital --emptyOutDir",
         "build:guardian": "cd \"1st interface/guardian-angel-ai-main\" && npm run build -- --outDir ../../dist --emptyOutDir",
-        "build": "npm run install:all && npm run build:driver && npm run build:hospital && npm run build:guardian"
+        "build": "npm run install:all && npm run build:guardian && npm run build:driver && npm run build:hospital"
     }
 }

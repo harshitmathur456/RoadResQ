@@ -162,7 +162,7 @@ const RegisterScreen = () => {
           newUserData = data;
         } catch (supabaseError: any) {
           // If it's the "already taken" error, rethrow it so we don't proceed
-          if (supabaseError.message.includes('Username already taken')) {
+          if (supabaseError?.message?.includes('Username already taken')) {
             throw supabaseError;
           }
           console.warn("Supabase signup failed, using offline fallback:", supabaseError);
